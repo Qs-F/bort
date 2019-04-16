@@ -39,13 +39,15 @@ func TestBort(t *testing.T) {
 		Case{
 			Input: func() io.Reader {
 				s := "hello, this is the text"
-				buf := make([]byte, 1)
-				b := bytes.NewBuffer(buf)
-				err := binary.Write(b, binary.LittleEndian, utf16.Encode([]rune(s)))
-				if err != nil {
-					t.Fatal(err)
-				}
-				return b
+				r, w := io.Pipe()
+				go func() {
+					err := binary.Write(w, binary.LittleEndian, utf16.Encode([]rune(s)))
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer w.Close()
+				}()
+				return r
 			}(),
 			Want: true,
 		},
